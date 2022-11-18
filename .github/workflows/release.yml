@@ -36,14 +36,14 @@ jobs:
           prerelease: false
   build-docker:
     needs: [tag, release]
-    uses: BrosSquad/vokapi/.github/workflows/docker.yml@master
+    uses: BrosSquad/vokapi/.github/workflows/docker.yml@main
     with:
       IMAGE_NAME: 'brossquad/vokapi'
       VERSION: '${{ needs.tag.outputs.version }}'
       CONTAINER_REGISTRY: 'ghcr.io'
     secrets:
-      CONTAINER_REGISTRY_USERNAME: ${{ secrets.CONTAINER_REGISTRY_USERNAME }}
-      CONTAINER_REGISTRY_TOKEN: ${{ secrets.CONTAINER_REGISTRY_TOKEN }}
+      CONTAINER_REGISTRY_USERNAME: ${{ github.actor }}
+      CONTAINER_REGISTRY_TOKEN: ${{ secrets.CR_PAT }}
   build:
     strategy:
       matrix:

@@ -59,5 +59,5 @@ func (c *Container) GetBadgerDB() *badger.DB {
 }
 
 func (c *Container) Close() error {
-	return nil
+	return c.badgerDB.Close()
 }

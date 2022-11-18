@@ -13,21 +13,33 @@ import (
 	"github.com/BrosSquad/vokapi/container"
 )
 
+type (
+	ErrorReponse struct {
+		Message string `json:"message,omitempty"`
+		Name    string `json:"string,omitempty"`
+	}
+	Response struct {
+		Vocative string `json:"vokativ"`
+	}
+)
+
+
 func Register(di *container.Container, router fiber.Router) {
-	router.Get("/:name", handler(di.GetBadgerDB()))
+	router.Get("/:name", Handler(di.GetBadgerDB()))
 }
 
-func handler(db *badger.DB) fiber.Handler {
+func Handler(db *badger.DB) fiber.Handler {
 	caser := cases.Title(language.SerbianLatin)
 
 	return func(c *fiber.Ctx) error {
 		name := c.Params("name", "")
-
 		decodedName, err := url.QueryUnescape(name)
 		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"poruka": "ime nije validno",
-			})
+			return c.
+				Status(fiber.StatusUnprocessableEntity).
+				JSON(ErrorReponse{
+					Message: "ime nije validno",
+				})
 		}
 
 		var value []byte
@@ -45,22 +57,28 @@ func handler(db *badger.DB) fiber.Handler {
 
 			return nil
 		})
+
 		if err != nil {
 			if errors.Is(err, badger.ErrKeyNotFound) {
-				return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-					"poruka": "Ime nije pronađeno.",
-					"ime":    decodedName,
-				})
+				return c.
+					Status(fiber.StatusNotFound).
+					JSON(ErrorReponse{
+						Message: "ime nije pronadjeno",
+						Name:    decodedName,
+					})
 			}
 
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"poruka": "Ups, nešto je pošlo po zlu.",
-			})
+			return c.
+				Status(fiber.StatusInternalServerError).
+				JSON(ErrorReponse{
+					Message: "Ups, nešto je pošlo po zlu.",
+				})
 		}
-		// golang.org/x/text/cases
 
-		return c.Status(fiber.StatusOK).JSON(fiber.Map{
-			"vokativ": string(caser.Bytes(value)),
-		})
+		return c.
+			Status(fiber.StatusOK).
+			JSON(Response{
+				Vocative: utils.UnsafeString(caser.Bytes(value)),
+			})
 	}
 }

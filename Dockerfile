@@ -21,7 +21,7 @@ COPY --from=build /app/bin/vokapi /bin/vokapi
 
 RUN apk add tini \
     && chmod +x /bin/vokapi \
-    && mkdir -p /var/vokapi/data
+    && mkdir -p /var/lib/vokapi
 
 ENTRYPOINT [ "/bin/tini" ]
-CMD [ "vokapi", "--db-path=/var/vokapi/data", "server", "--host=0.0.0.0", "--port=1389" ]
+CMD [ "vokapi", "--db-path=/var/lib/vokapi/data", "server", "--host=0.0.0.0", "--port=1389" ]

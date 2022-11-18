@@ -1,0 +1,19 @@
+[Unit]
+Description=Serbian Vocative Service
+Wants=network-online.target syslog.target
+Requires=network.target
+After=network.target syslog.target
+
+[Service]
+Type=simple
+ExecStart=/bin/vokapi --db-path=/var/lib/vokapi server --host=0.0.0.0 --port=8080
+ExecStop=/bin/kill -s QUIT $MAINPID
+ExecReload=/bin/kill -s HUP $MAINPID
+SyslogIdentifier=vakapi
+Restart=always
+RestartSec=3
+User=vokapi
+Group=vokapi
+
+[Install]
+WantedBy=multi-user.target

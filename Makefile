@@ -68,4 +68,4 @@ vet:
 
 .PHONY: zip
 zip:
-	@zip -r vokapi.zip bin/
+	@zip -r vokapi.zip bin/ systemd.service

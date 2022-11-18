@@ -22,7 +22,7 @@ func Execute() {
 
 	flags := rootCmd.PersistentFlags()
 
-	flags.StringP("db-path", "d", "./db/database.badgerdb", "path to the database file")
+	flags.StringP("db-path", "d", "./db/data", "path to the database file")
 	registerCommands(rootCmd)
 
 	if err := rootCmd.ExecuteContext(context.Background()); err != nil {

@@ -48,7 +48,7 @@ jobs:
         with:
           push: true
           pull: true
-          context: ./backend
+          context: .
           platforms: linux/amd64,linux/arm64
           tags: ${{ inputs.IMAGE_NAME }}
           cache-from: type=local,src=/tmp/.buildx-cache

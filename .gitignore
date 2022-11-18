@@ -1,2 +1,4 @@
 db/database.badgerdb/
+db/data/
 imena.csv
+bin/
