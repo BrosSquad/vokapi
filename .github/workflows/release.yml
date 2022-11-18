@@ -1,0 +1,82 @@
+name: 'Release'
+
+on:
+  push:
+    tags:
+      - 'v*'
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.git_tag.outputs.tag }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - uses: olegtarasov/get-tag@v2.1
+        id: git_tag
+        with:
+          tagRegex: 'v(.*)'
+          tagRegexGroup: 1
+  release:
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+  build-docker:
+    needs: [tag, release]
+    uses: BrosSquad/vokapi/.github/workflows/docker.yml@master
+    with:
+      IMAGE_NAME: 'brossquad/vokapi'
+      VERSION: '${{ needs.tag.outputs.version }}'
+      CONTAINER_REGISTRY: 'ghcr.io'
+    secrets:
+      CONTAINER_REGISTRY_USERNAME: ${{ secrets.CONTAINER_REGISTRY_USERNAME }}
+      CONTAINER_REGISTRY_TOKEN: ${{ secrets.CONTAINER_REGISTRY_TOKEN }}
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        go: [1.19.x]
+    runs-on: ${{ matrix.os }}
+    needs: [tag, release]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.go }}
+      - uses: actions/cache@v2
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+      - name: Build
+        run: make build VERSION=${{ needs.tag.outputs.version }} RACE=0 ENVIRONMENT=production
+        env:
+          CGO_ENABLED: 0
+      - name: Zip build directory
+        run: make zip
+      - name: Upload Release Asset
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.release.outputs.upload_url }}
+          asset_path: vokapi.zip
+          asset_name: vokapi.zip
+          asset_content_type: application/octet-stream
